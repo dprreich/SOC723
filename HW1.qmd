@@ -3,3 +3,36 @@ title: "HW1"
 format: html
 editor: visual
 ---
+
+## 1.1
+
+1.  aaa
+2.  aaa
+3.  aaa
+4.  aaa
+5.  aaa
+
+## 1.2
+
+```{r}
+library(tidyverse)
+library(gt)
+```
+
+## 1.3
+
+```{r}
+d <- data.frame(
+  T = c(0, 0, 1, 0, 0, 1, 1, 1),
+  Y0 = c(5, 8, 5, 12, 4, 8, 4, 9),
+  Y1 = c(5, 10, 3, 13, 2, 9, 1, 13), 
+  id = LETTERS[1:8]
+)
+
+gt(d, rowname_col = "id")
+```
+
+```{r}
+d = mutate(d, Y = ifelse(T == 0, Y0, Y1))
+mean(d$Y[d$T ==1] - mean(d$Y[d$T ==0]))
+```
