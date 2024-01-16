@@ -1,0 +1,87 @@
+---
+title: "HW1 - Reich"
+format: html
+editor: visual
+---
+
+## 1.1
+
+Five terms!
+
+1.  Theoretical Estimand: This is the actual thing we would like to know. The two components of which are the unit-specific quantity and the target population. The theoretical estimand includes both observed and unobserved data (including counterfactuals).
+2.  Empirical Estimand: The empirical estimand is the target of inference that only includes observable data and relies on identification assumptions.
+3.  Directed Acyclic Graphs: A tool for visualizing causal diagrams in which causality is directed by pointed arrows and nodes cannot reference themselves.
+4.  Causal Interaction: Intervention to two variables averaged over one population. Effect of one variable on the outcome is related to the effect of another. (Example given in article: Black & White applicants, criminal record vs no criminal record. Effect of criminal record on getting an interview might be different for Black and White applicants.)
+5.  Effect Heterogeneity: Intervention to one variable averaged over two populations. (I'm a little confused about the difference between this and Causal Interaction.)
+
+## 1.2
+
+Packages
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(gt)
+library(pwr)
+```
+
+## 1.3
+
+Setup
+
+```{r}
+d <- data.frame(
+  T = c(0, 0, 1, 0, 0, 1, 1, 1),
+  Y0 = c(5, 8, 5, 12, 4, 8, 4, 9),
+  Y1 = c(5, 10, 3, 13, 2, 9, 1, 13), 
+  id = LETTERS[1:8]
+)
+
+gt(d, rowname_col = "id")
+```
+
+Creating Y
+
+```{r}
+d = mutate(d, Y = ifelse(T == 0, Y0, Y1))
+mean(d$Y[d$T ==1] - mean(d$Y[d$T ==0]))
+
+effect_size  = 0.125/sd(d$Y) #for 1.5
+```
+
+ATE for this experiment = -0.75
+
+## 1.4
+
+Simulate!
+
+```{r}
+set.seed(2001)
+
+d$T = sample(d$T)
+d = mutate(d, Y = ifelse(T == 0, Y0, Y1))
+ATE1 = mean(d$Y[d$T == 1] - mean(d$Y[d$T == 0]))
+
+d$T = sample(d$T)
+d = mutate(d, Y = ifelse(T == 0, Y0, Y1))
+ATE2 = mean(d$Y[d$T == 1] - mean(d$Y[d$T == 0]))
+
+d$T = sample(d$T)
+d = mutate(d, Y = ifelse(T == 0, Y0, Y1))
+ATE3 = mean(d$Y[d$T == 1] - mean(d$Y[d$T == 0]))
+
+ATE1
+ATE2
+ATE3
+mean(ATE1, ATE2, ATE3)
+range(ATE1, ATE2, ATE3)
+```
+
+Here we see that our treatments effects for each 8 person experiment (-0.5, 4.25, -3.5) are different than both our "real" ATE and the ATE we calculated in 1.3. The range of observed ATEs is quite large as well (-3.5, 4.25).
+
+## 1.5
+
+```{r}
+pwr.t.test(d = effect_size, sig.level = .05, power = .80, type = "two.sample")
+```
+
+According to the power analysis above, it seems we would need 18,785 people in each group, or 37,570 people in total, in order to have an 80% chance of detecting our "real" ATE of 0.125, assuming it exists.
