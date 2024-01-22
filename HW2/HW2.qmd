@@ -1,0 +1,81 @@
+---
+title: "HW2 - Reich"
+format: html
+editor: visual
+---
+
+## 2.1
+
+\
+Which of the following is the best definition of the term *identified* as in “this variation has identified the effect we’re interested in”?
+
+**b. In the data generating process, the only reason why we see variation in the outcome variable is because of the treatment variable.**
+
+## 2.2
+
+\
+You read about a new study with the headline “eating caviar linked to longer lifespan.” The study’s research question is “does eating caviar make you live longer?” In the study’s data, they find that people who eat caviar have, on average, longer lifespans than people who don’t.
+
+a.  What are some alternate explanations for this relationship?
+
+    **People who can afford caviar can probably also afford healthcare, which might prolong their lives.**
+
+b.  What sort of variation would identify the answer to the research question?
+
+    **We would be interested in the variation in the independent variable (caviar consumption) and the dependent variable (lifespan)**.
+
+c.  Give one suggestion for how the study authors might isolate variation that would identify the answer to the research question
+
+    **Based on the alternative explanation I provided in part a, assessing the variation in caviar consumption and lifespan for different levels of household income might identify *some* aspect of the research question. However, there certainly are more alternative explanations that could affect this relationship.**
+
+## 2.3
+
+\
+For each of the following news headlines, assume that the underlying data actually only shows a correlation between the two variables mentioned. Give an alternate explanation for the correlation other than the causal relationship implied by the headline.
+
+a.  “As stock market drops, presidential approval ratings decline.”
+
+    **This could hypothetically be reverse causation. Decreases in presidential approval ratings might spook investors into selling. There could also be events that decrease approval ratings as well as stock prices, causing a spurious relationship.**
+
+b.  “Dates are announced for the downtown summer concert series, driving up sales at downtown restaurants.”
+
+    **Could be a temporal effect. People might happen to go out more during the warmer months.**
+
+c.  “Unsanitary? Hospital visits linked to 20% increased risk of disease.”
+
+    **This seems like survivorship bias to me. Individuals who do not visit hospitals will not have the opportunity to get diagnosed with a disease (especially diseases that do not present noticeable symptoms.) People who pay more attention to their health might also be more likely to visit hospitals *and* notice disease symptoms.**
+
+    Reminds me of this fantastic quote:
+
+    *"Without testing, or weak testing, we would be showing almost no \[COVID-19\] cases."*
+
+    \- Donald Trump
+
+d.  “Dress for success! Every CEO follows this office-wear rule.”
+
+    **Perhaps being a CEO pays well (perhaps), and this extra cash allows CEOs to afford fancy clothes.**
+
+## 2.4
+
+Why is a variable that causes both the “treatment” and “outcome” variables especially concerning for identification? You may want to use the phrase “alternate explanation” in your answer.
+
+**A variable that affects both the treatment and outcome variables is concerning because it could present an effect that does not exist. For example, if we are interested in the effect of education on the type of clothes worn, we might find that young adults who are currently in college wear nicer clothes than those who are not in college. An alternative explanation might be family SES. A high SES might lead to a kid attending college, and might also allow them to purchase nicer clothes. Since SES affects both the treatment and outcome, we cannot be sure how much of our effect is due to the treatment alone.**
+
+## 2.5
+
+\
+Shoe company Crikey claims that people who wear their fancy and expensive professional running-shoe Cool Mistrunner brand run 4 to 5% faster than if they wore an average shoe.
+
+a.  In a few sentences, describe the data-generating process (you will probably leave some things out, that’s okay).
+
+    **Crikey claims that people who wear the shoes run 4-5% faster. Some athletes will wear the shoes and some will not. Athletes will have different running speeds. We want to target the variation in running speeds and compare this for athletes who wear the shoes and who do not wear the shoes.**
+
+b.  What are possible alternative explanations for this claim, aside from the shoe making the person run faster?
+
+    **A person who buys a shoe that claims to make them run faster is perhaps more likely to try other things to help their performance. Maybe they're wearing a super cool bracelet that helps them run faster or using performance-enhancing drugs.**
+
+c.  In running their study, the researchers accounted for some alternative explanations, including: gender, enthusiasm for running, and whether runners have participated in marathons and/or half marathons. Think of an alternative explanation not on this list. What is the implication of not accounting for this alternative explanation?
+
+    **An important group of alternative explanations that they leave out are those related to other performance-enhancing items. For example, if an athlete drinks energy drinks before a race, they might run faster than their competitors. Individual training methods are also important to consider. There could be within-person effects, where some athletes are just faster than others, with or without the shoe. Doing a pre-test and post-test could be useful for accounting for this alternative explanation, though.**
+
+    **If we claim that the shoe makes you faster, but do not account for all of these alternative explanations, we cannot be sure that it is the shoe making you faster. One or many of these alternative explanations could be making you faster, with or without the shoe.**
