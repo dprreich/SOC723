@@ -1,0 +1,296 @@
+---
+title: "HW3"
+format: html
+editor: visual
+---
+
+## Week 3 HW
+
+Setup
+
+```{r, message = F, warning = F}
+library(tidyverse)
+theme_set(theme_light(base_family = "Optima"))
+```
+
+## 3.1
+
+-   Fill in the missing cells.
+
+    |               |         |         |
+    |---------------|---------|---------|
+    | **Group (T)** | E\[Y1\] | E\[Y0\] |
+    | T = 1         | 10,000  | 5,000   |
+    | T = 0         | 10,000  | 5,000   |
+
+-   What is the ATE?
+
+    **1,500 (10,000 - 5,000 = 5,000 \* 0.3 = 1,500)**
+
+## 3.2
+
+**Old terms**
+
+1.  Theoretical Estimand: This is the actual thing we would like to know. The two components of which are the unit-specific quantity and the target population. The theoretical estimand includes both observed and unobserved data (including counterfactuals).
+2.  Empirical Estimand: The empirical estimand is the target of inference that only includes observable data and relies on identification assumptions.
+3.  Directed Acyclic Graphs: A tool for visualizing causal diagrams in which causality is directed by pointed arrows and nodes cannot reference themselves.
+4.  Causal Interaction: Intervention to two variables averaged over one population. Effect of one variable on the outcome is related to the effect of another. (Example given in article: Black & White applicants, criminal record vs no criminal record. Effect of criminal record on getting an interview might be different for Black and White applicants.)
+5.  Effect Heterogeneity: Intervention to one variable averaged over two populations. (I'm a little confused about the difference between this and Causal Interaction.)
+
+**New terms**
+
+-   DAG. - Directed acyclic graph - A type of causal diagram in which all arrows are directed from one node to another, and there are no cycles.
+
+-   Paths. - A path is simply the steps from one variable to another on a causal diagram. A -\> B -\> C is a path.
+
+-   Direct effects. - The effect of only the treatment variable on the outcome variable.
+
+-   Indirect effects. - The effect(s) of the treatment variable on the outcome variable that includes paths through other variables.
+
+-   Total effects. - The sum of the direct and indirect effects.
+
+-   Front door paths. - A path where all the arrows point away from Treatment
+
+-   Back door paths. - A path where at least one arrow points towards Treatment.
+
+-   Confounding. - When open back door paths affect the relationship between Treatment and Outcome. Often occurs through unmeasured or unobserved variables.
+
+-   Collider. - A variable along a path with arrows on both sides pointing at it.
+
+-   Open Path. - A path in which there is variation in all variables along the path (and no variation in any colliders on that path)
+
+-   Closed Path. - A path in which there is at least one variable with no variation (or a collider with variation)
+
+## 3.3
+
+\
+Draw a causal diagram for the research question “do long shift hours make doctors give lower-quality care?” that incorporates the following features (and only the following features):
+
+a.  Long shift hours affect both how tired doctors are, and how much experience they have, both of which affect the quality of care
+
+    ![](images/DAG1.png)
+
+    L - Long hours
+
+    T - How tired they are
+
+    E - Experience
+
+    Q - Quality of care
+
+b.  How long shifts are is often decided by the hospital the doctor works at. There are plenty of other things about a given hospital that also affect the quality of care, like its funding level, how crowded it is, and so on
+
+    ![](images/DAG2.png)
+
+    H - Hospital
+
+    L - Long hours
+
+    C - Crowded
+
+    F - Funding
+
+    Q - Quality of care
+
+c.  New policies that reduce shift times may be implemented at the same time (with the timing determined by some unobservable change in policy preferences) as other policies that also attempt to improve the quality of care
+
+    ![](images/DAG3.png)
+
+    U - Unobservable change in policy preferences
+
+    P - Policy change
+
+    L - Long hours
+
+    O - Other policies
+
+    Q - Quality of care
+
+## 3.4
+
+\
+Consider this research question: Does the funding level of public schools affect student achievement for students in your country?
+
+a.  What is the treatment and what is the outcome of interest?
+
+    **The treatment variable is the funding level of each school. The outcome of interest is student achievement.**
+
+b.  Write down a list of relevant variables.
+
+    **School funding, student achievement, parent SES, tutoring resources, county/city average SES, tax revenue**
+
+c.  Which of the variables in your list in part b are causes of both treatment and outcome?
+
+    **county/city SES**
+
+d.  Why might we want to pay extra attention to the variables listed in part c?
+
+    **They can affect the relationship between our variables of interest. For example, counties/cities with higher SES likely have more funding available for schools (via more tax revenue and such), and also, higher-income areas are more likely to have higher-income parents and higher-income parents are more likely to be able to afford tutoring for their children. More school funding and more tutoring resources are likely to result in higher achievement.**
+
+e.  Draw a causal diagram of the variables listed in part b.
+
+    ![](images/clipboard-2513041963.png)
+
+f.  Simplify the diagram from part e.
+
+    ![](images/clipboard-1045684182.png)
+
+    **Since all of the variables affecting School Funding and Student Achievement were related to County/City SES, I simplified the diagram by focusing on County/City SES. "Controlling" for county/city SES should theoretically mitigate the effects of the other variables. There are of course unobserved variables that can affect our results, and all of these confounders might not be fully explained by county/city SES, but I figured this is close to what you were asking for when you asked for me to simplify the diagram.**
+
+## 3.5
+
+\
+How can a causal diagram be modified so as to avoid cyclic relationships?
+
+Consider the diagram below. It depicts a cyclical relationship between student achievement and motivation. If students achieve more (i.e., score well on exams), then their motivation goes up, and if their motivation goes up, they achieve more. Change the diagram so that the relationship is not cyclic anymore.
+
+![](images/DAG4.png)
+
+## 3.6
+
+Assuming that a path has no colliders on it, what is the difference between a path being Open and Closed?
+
+**In an open path, all of the variables on the path are allowed to vary. In a closed path, at least one variables on the path has no variation.**
+
+## 3.7
+
+![](images/clipboard-1273882968.png){width="407"}
+
+a.  List every path from X to Y.
+
+    X -\> A -\> Y
+
+    X \<- B -\> Y
+
+    X -\> C \<- D -\> Y
+
+    X \<- B \<- D -\> Y
+
+b.  Which of the paths are front-door paths?
+
+    X -\> A -\> Y
+
+c.  Which of the paths are open back-door paths?
+
+    X \<- B -\> Y
+
+    X \<- B \<- D -\> Y
+
+d.  What variables must be controlled for in order to identify the effect of X on Y? (only list what must be controlled for, not anything that additionally could be controlled for).
+
+    B
+
+## 3.8
+
+\
+Which of the following describes a causal path where all the arrows point away from the treatment?
+
+**c. Front Door Path**
+
+## 3.9
+
+![](images/clipboard-3206163399.png)
+
+a.  What type of variable is Popularity in one path on this diagram?
+
+    **Collider variable.**
+
+b.  Discuss what would happen if you controlled for Popularity.
+
+    **It would open a path between teaching quality and number of publications.**
+
+## 3.10
+
+\
+Go to the app Steve showed us in class.
+
+<https://cbdrh.shinyapps.io/daggle/>
+
+Spend some time noodling around with it and upload screenshots with the right answer for three DAGs with 4, 6, and 8 nodes each. Set the complexity to “difficult.”
+
+\*\* These screenshots were taken AFTER daggle said that my answers were correct.
+
+4 nodes -
+
+![](images/daggle-109747.png){width="342"}
+
+![](images/daggle-109697.png){width="328"}
+
+![](images/daggle-109677.png){width="345"}
+
+6 nodes -
+
+![](images/daggle-149747.png){width="335"}
+
+![](images/daggle-149985.png){width="322"}
+
+![](images/daggle-149909.png){width="357"}
+
+8 nodes -
+
+![](images/daggle-189269.png){width="369"}
+
+![](images/daggle-189301.png){width="337"}
+
+![](images/daggle-189569.png){width="347"}
+
+## 3.11
+
+![](images/clipboard-3108229154.png){width="497"}
+
+```{r, message = F, , warning = F}
+source("hod_simulation_functions.R")
+set.seed(12345) ## include this so that grading is easier for me.
+d <- hod_simulation(N = 1e3, Bt = 2, Bx = 4, rho = -0.8)
+
+d %>%
+  group_by(t) %>%
+  summarize(mean_y = mean(y), mean_y0 = mean(y0, na.rm = T), mean_y1 = mean(y1, na.rm = T))
+```
+
+-   Without looking at the results just yet… do you think the naive estimate will be larger or smaller than the “real” estimate ( ATE = 2 )?
+
+    **Larger, since there is an open back-door path from T to Y, and X has a positive effect on Y.**
+
+-   Check your answer. What are the results given by the naive estimator?
+
+    **5.72**
+
+-   Re-do this but set `rho` to -0.8 (so that S and X are now negatively correlated).
+
+    **-2.04**
+
+## 3.12
+
+Take the dataset `d` created in the previous question and modify it so that the treatment is now randomized (this will destroy the path between S and T).
+
+```{r, message = F,, warning = F}
+set.seed(12345)
+dnew = d
+dnew$t = sample(dnew$t)
+dnew = mutate(dnew, y = ifelse(t == 0, y0, y1))
+
+dnew %>%
+  group_by(t) %>%
+  summarize(mean_y = mean(y), mean_y0 = mean(y0, na.rm = T), mean_y1 = mean(y1, na.rm = T))
+```
+
+-   Without looking at the results just yet… do you think the naive estimate will be larger or smaller than the “real” estimate ( ATE = 2 )?
+
+    **I think it should be closer to the real estimate, since it closes the back door path. It might be a little higher or a little lower.**
+
+-   Check your answer. What are the results given by the naive estimator?
+
+    **2.35**
+
+-   Use `lm()` to predict the newly created `y` from `t`. What are the coefficient values?
+
+    ```{r, message = F}
+    lm(d$y ~ d$t)
+    ```
+
+-   Use `lm()` to predict the newly created `y` from `t` and `x`. What are the coefficient values?
+
+    ```{r, message = F}
+    lm(d$y ~ d$t + d$x)
+    ```
