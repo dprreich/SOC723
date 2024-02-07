@@ -1,0 +1,157 @@
+---
+title: "HW 4"
+format: html
+editor: visual
+---
+
+```{r, warning = F, message = F}
+library(tidyverse)
+theme_set(theme_light(base_family = "Optima"))
+
+
+#steve function
+rbern <- function(n, p = .5) {
+  rbinom(n = n,
+         size = 1,
+         prob = p)
+}
+
+```
+
+## 4.1
+
+```{r, warning = F, message = F}
+N <- 1e4
+
+d <- tibble(
+  x = rnorm(N, 0, 1),
+  y = rnorm(N, 0, 1)
+)
+```
+
+Plot 1
+
+```{r}
+d1 <- tibble(
+  x = rnorm(N, 0, 1),
+  y = rnorm(N, 0, 1)
+)
+d1 = filter(d1, x > 0 | y > 0)
+plot(d1)
+```
+
+Plot 2
+
+```{r}
+d2 <- tibble(
+  x = rnorm(N, 0, 1),
+  y = rnorm(N, 0, 1)
+)
+d2 = filter(d1, y >= -x)
+plot(d2)
+```
+
+Plot 3
+
+```{r}
+d3 <- tibble(
+  x = rnorm(N, 0, 1),
+  y = rnorm(N, 0, 1)
+)
+d3 = filter(d3, y >= -x - 1.5 & y <= -x + 1.5)
+plot(d3)
+```
+
+Plot 4
+
+```{r}
+d4 <- tibble(
+  x = rnorm(N, 0, 1),
+  y = rnorm(N, 0, 1),
+  log_odds_c = x + y,
+  prob_c = exp(log_odds_c) / (1 + exp(log_odds_c)),
+  c = rbern(N, prob_c)
+)
+
+
+```
+
+## 4.2
+
+a.  Conditional average treatment effect - the average treatment effect on a subset of your sample who match a certain criterion
+
+b.  Average treatment on the treated - the average treatment effect among those who do receive the treatment
+
+c.  Average treatment on the untreated - the average treatment effect among those who do not receive the treatment
+
+## 4.3
+
+Provide an example of a treatment effect that you would expect to be highly heterogeneous, and explain why you think it is likely to be heterogeneous.
+
+If you want to see the effect that giving somebody \$1000 has on their life satisfaction. Giving a significant amount of money to someone who makes \$15k per year would likely have a much larger effect compared to giving money to someone who makes \$300k per year.
+
+## 4.4
+
+a.  What is the overall average treatment effect for the population?
+
+    6
+
+b.  What is the average treatment effect for Women?
+
+    4.666667
+
+c.  If nearly all Non-binary people get treated, and about half of all Women get treated, and we control for the differences between Women and Non-binary people, what kind of treatment effect average will we get, and what can we say about the numerical estimate we’ll get?
+
+    This is a variance-weighted average treatment effect.
+
+    If we compare Women and Non-Binary people using a variance-weighted average, the effect for Non-Binary people will cancel out, as they have 0 variance, so the variance-weighted average treatment effect will be the same as the effect for just women: \~ 4.67
+
+d.  If we assume that, in the absence of treatment, everyone would have had the same outcome, and also only teenagers (19 or younger) ever receive treatment, and we compare treated people to control people, what kind of treatment effect average will we get, and what can we say about the numerical estimate we’ll get?
+
+    This is a conditional average treatment effect.
+
+    (7+7)/2 - (3+7+8+4)/4 = 1.5
+
+    The conditional average treatment effect for teens in this scenario is 1.5. However, we only have two observations who are teens, and both of them are males. This effect might be different if we have more observations and more variance in these observations.
+
+## 4.5
+
+Give an example where the average treatment effect on the treated would be more useful to consider than the overall average treatment effect, and explain why.
+
+Steve provided the example of a kidney transplant. We are more interested in how a kidney transplant will help somebody who needs one than in how it affects people who do not need a new kidney.
+
+## 4.6
+
+Which of the following describes the average treatment effect of assigning treatment, whether or not treatment is actually received?
+
+c\. Intent-to-treat
+
+## 4.7
+
+Suppose you are conducting an experiment to see whether pricing cookies at \$1.99 versus \$2 affects the decision to purchase the cookies. The population of interest is all adults in the United States. You recruit people from your university to participate and randomize them to either see cookies priced as \$1.99 or \$2, then write down whether they purchased cookies. What kind of average treatment effect can you identify from this experiment?
+
+Conditional average treatment effect
+
+## 4.8
+
+For each of the following identification strategies, what kind of treatment effect(s) is most likely to be identified?
+
+a.  A randomized experiment using a representative sample
+
+    ATE
+
+b.  True randomization within only a certain demographic group
+
+    Conditional ATE
+
+c.  Closing back door paths connected to variation in treatment
+
+    Variation-weighted treatment effect
+
+d.  Isolating the part of the variation in treatment variable that is driven by an exogenous variable
+
+    Local average treatment effect
+
+e.  The control group is comparable to the treatment group, but treatment effects may be different across these groups
+
+    Heterogeneous treatment effect
