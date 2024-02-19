@@ -1,0 +1,72 @@
+---
+title: "HW6"
+format: html
+editor: visual
+---
+
+## 6.2.1
+
+data/setup
+
+```{r}
+d <- haven::read_dta("cattaneo2.dta")
+
+d <- d |>  
+  haven::zap_labels() |>             
+  dplyr::select(bweight, lbweight, mbsmoke, mmarried, mage, medu, fbaby, alcohol, mrace, nprenatal)
+
+```
+
+We can start checking for imbalance for several covariates by examining their absolute standardized difference in means—i.e., a **balance plot**. I’ve included a graph that shows the *absolute standardized difference in means values* for a set of confounding covariates that might predict both `mbsmoke` and birth weight.
+
+Your job is to reproduce something close to this figure.
+
+```{r}
+covs <- subset(d, select = -c(mbsmoke, bweight, lbweight))
+tab <- cobalt::bal.tab(covs,
+        treat = d$mbsmoke,
+        continuous = "std",
+        binary = "std",
+        s.d.denom ="treated"
+        )
+
+cobalt::love.plot(tab)
+```
+
+What do you think are the most important covariates you need to adjust for in terms of the potential biases in the treatment effect?
+
+**The least balanced covariates seem to be: mmarried, medu, mage, nprenatal, and alcohol. These are important to adjust for, as this implies an unequal distribution of these covariates in our control and treatment groups.**
+
+## 6.3.1
+
+You want to know whether practicing cursive improves your penmanship (on a 1-10 scale). You find that, among people who don’t practice cursive, average penmanship is 5, 10 people are left-handed, 2 are ambidextrous, and 88 are right-handed. Among people who do practice cursive, 6 are left-handed with average penmanship 7, 4 are ambidextrous with average penmanship 4, and 90 are right-handed with average penmanship 6.
+
+a.  You want to create a set of weights that will *make the treated group match the control group on handedness*. Follow the process in [section 14.2](https://theeffectbook.net/ch-Matching.html#weighted-averages), paying attention to *why* certain numbers are going in certain positions. What weights will be given to the left, ambidextrous, and right-handed people *in the control group*?
+
+    **1 for everyone !!!! This is because we want to change the treated group to match the control group, not the other way around.**
+
+b.  What weights will be given to the left, ambidextrous, and right-handed people *in the treated group*?
+
+    **Left: 10/6 = 1.67**
+
+    **Right: 2/4 = 0.5**
+
+    **Ambidextrous: 88/90**
+
+c.  Use the weights from part b to calculate the *proportion of left-handed people in the treated group*, as well as the proportion of ambidextrous people and the proportion of right-handed people. If you don’t get 10%, 2%, and 88% (or very close with some rounding error), your weights are wrong, try again.
+
+    **Left: 6 \* 1.67 = 10.02**
+
+    **Right: 4 \* 0.5 = 2**
+
+    **Ambidextrous: 90 \* 0.98 = 88.2**
+
+d.  What is the weighted average penmanship score in the treated group?
+
+    **(1.67 \* 6 \* 7) + (0.5 \* 4 \* 4) + (0.98 \* 90 \* 6) / 100 = 6.07**
+
+e.  What is the effect of practicing cursive that we would estimate using this data?
+
+    **We would estimate an effect of 1.07 (6.07 - 5, or weighted average of treatment - control group average).**
+
+    **We could also use our unweighted treatement average: (6\*7 + 4\*4 + 90\*6)/100 = 5.98, and subtract our control average, 5, and get 0.98.**
