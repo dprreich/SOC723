@@ -1,0 +1,152 @@
+---
+title: "HW 7"
+format: html
+editor: visual
+---
+
+Setup
+
+```{r, warning = F, message = F}
+# Packages ---
+
+library(tidyverse)
+library(broom)
+library(cobalt)
+library(MatchIt)
+library(WeightIt)
+library(sm)
+
+# Helper Functions ---
+
+love_plot <- function(x) {
+  cobalt::love.plot(x, 
+    binary = "std" ,
+    stats = c("m", "ks") ,
+    thresholds = c(.1, .05),
+    var.order = "adjusted",
+    abs = TRUE
+  )
+}
+
+#data
+load("exercise_data.Rdata")
+```
+
+## 7.1.1
+
+Use the experimental data to estimate the effect of the job training treatment. How much does it appear to affect 1978 income? Now look at the observational data (for all exercises from now on). How large is the raw difference in 1978 income between the treatment group and the PSID comparison group?
+
+```{r}
+## EXPERIMENT
+# raw difference in means :D
+d_exper %>% 
+  group_by(treat) %>% 
+  summarize(mean = mean(re78))
+
+## OBSERVATIONAL
+# raw difference in means :D
+d %>% 
+  group_by(treat) %>% 
+  summarize(mean = mean(re78))
+```
+
+In the experimental data, the treated group has a mean that is 0.886 higher than the untreated group.
+
+In the observational data, the treated group has a mean that is 16.542 lower than the untreated group.
+
+## 7.1.2
+
+Try to estimate the effect of the treatment using regression. What does regression say the effect of the program is?
+
+```{r}
+# regression for experiment 
+summary(lm(re78 ~ treat, data = d_exper))
+
+# regression for observational
+summary(lm(re78 ~ treat, data = d))
+```
+
+Using regression gives us the same results as computing the raw difference in means. However, regression does tell us that this result is statistically significant in the observational data, but not quite so in the experimental data (by conventional standards with a p \< 0.05).
+
+## 7.1.3
+
+Begin by exact matching on all the dummy variables. How many treated cases cannot be matched? What is the (FS)ATT estimate?
+
+```{r}
+d_ematch <-
+  matchit(treat ~ black + hisp + married + nodegr + u74 + u75,
+          data = d,
+          method = "exact")
+summary(d_ematch)
+
+ematch <- match.data(d_ematch)
+mod1 <- lm(re78 ~ treat, data = ematch, weights = weights)
+summary(mod1)
+```
+
+Only 10 treated cases remain unmatched.
+
+In this model, being in the treatment group is associated with a 2.39 decrease in re78 (the FSATT is -2.39).
+
+## 7.1.4
+
+Use the observational data to estimate each case’s propensity to receive treatment using `glm()`. Use a logistic regression with quadratic terms for age, education, 1974 income, and 1975 income. Spend a few moments thinking about what this model says. Look at the density plots of the p-score for treated and untreated groups.
+
+```{r}
+ps <- glm(treat ~ age + educ + black + hisp +
+                   married + nodegr + re74 + re75 +u74
+                   + u75 + I(age^2) + I(educ^2) + I(re74^2)  + I(re75^2),
+          data = d,
+          family = "binomial")
+summary(ps)
+d$ps = predict(ps, d, type = "response")
+
+hist(d$ps)
+sm.density.compare(d$ps, as.factor(d$treat))
+```
+
+Our results show that age, educ, black, hisp, and married all have statistically significant effects on selection into treatment.
+
+The density plot suggests that, for the control group, their propensity scores are mostly concentrated around 0, while for the treatment group, their propensity scores are mostly concentrated around 1.
+
+## 7.1.5
+
+Estimate propensity scores and ATT weights using `weightit()`. Ignore the warning you get. We’ll discuss that more in class. Estimate the ATT. Check for covariate balance.
+
+```{r}
+mod_weights <- weightit(treat ~ age + educ + black + hisp +
+                   married + nodegr + re74 + re75 +u74
+                   + u75 + I(age^2) + I(educ^2) + I(re74^2)  + I(re75^2),
+                        data = d,
+                        method = "ps",
+                        estimand = "ATT")
+
+love_plot(mod_weights)
+
+summary(lm(re78 ~ treat, data = d, weights = mod_weights$weights))
+```
+
+After adjustment, many predictors remain unbalanced for the treatment and control groups.
+
+The ATT here is 1.139.
+
+## 7.1.6
+
+Now do the same as above using “entropy balancing.” Confirm that you’ve achieved balance on the means and the variances of the covariates. Estimate the ATT.
+
+```{r}
+entbal <- weightit(treat ~ age + educ + black + hisp +
+                   married + nodegr + re74 + re75 +u74
+                   + u75 + I(age^2) + I(educ^2) + I(re74^2)  + I(re75^2), 
+                   data = d,
+                   method = "ebal",
+                   moments = 3,
+                   estimand = "ATT")
+love_plot(entbal)
+
+summary(lm(re78 ~ treat, data = d, weights = entbal$weights))
+```
+
+They're finally balanced!! (at least with regard to their means. their distributions do not completely match up, but this is better than we had previously).
+
+The ATT here is 0.174.
