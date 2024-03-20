@@ -1,0 +1,119 @@
+---
+title: "HW 8"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(WeightIt)
+library(broom)
+library(cobalt)
+
+dict_url <- "https://raw.githubusercontent.com/avehtari/ROS-Examples/master/Childcare/data/datadict.txt"
+
+var_names <- c("momage", "b.marr", "momed", "work.dur", "prenatal", "cig", "booze", "sex", "first", "bw", "bwg", "preterm", "black", "hispanic", "white", "lths", "hs", "ltcoll", "college", "dayskidh", "st5", "st9", "st12", "st25", "st36", "st42", "st48", "st53", "st99", "income", "treat", "ppvtr.36")
+
+url <- "https://raw.githubusercontent.com/avehtari/ROS-Examples/master/Childcare/data/cc2.csv"
+
+d <- read_csv(url) |> 
+  select(all_of(var_names)) |> 
+  mutate(across(matches("st\\d{2}"), as.integer))
+```
+
+## 8.1.1
+
+-   Why did they decide to exclude these children? What problem could we encounter by not omitting them?
+
+    It seems that they omitted these children because they were fairly extreme outliers. Without knowing much about these children, I would assume that they have lower weights for some exogenous reason, for example, being born with a birth defect. These potential birth defects might affect the child's performance in addition to their weights.
+
+-   Would *you* have excluded them from the dataset?^[2](https://acastroaraujo.github.io/socStats2/week08.html#fn2)^ Why?
+
+    If I am correct in that the children removed were different than those in the sample for non-random reasons, I agree with removing them. However, if they were removed solely because they are "outliers", I would advise against removing them. Removing outliers causes us to miss out on valuable information. I would only remove outliers that are outliers for some potentially confounding reason (this can change on a case-by-case basis, but without knowing much about these children, it is difficult to decide if I would certainly remove them or not).
+
+## 8.1.2
+
+Look at the variables.
+
+Which ones are you planning to use for covariate balancing? Justify your answer, but *keep it short!*
+
+```{r}
+summary(d)
+
+
+```
+
+I'm planning on balancing momage, work.dur, cig, booze, bwg, preterm, first, college, and income. I feel that all of these variables are potential pre-treatment confounders, as they likely impact IQ scores either directly or indirectly. For example, mother's education and income likely affect the quality and quantity of time spent with the parents that could result in higher IQ. Cigarette and alcohol use, being born preterm, and having a low birth weight might also affect our outcome. I also included race/ethnicity variables because those often affect things. I chose not to include geographic information as I would expect the included variables to capture any potential geographic differences.
+
+## 8.1.3
+
+Use the `WeightIt` package and try to achieve balance before estimating the ATT for the effect of this child care program.
+
+You will have to do this three separate times, using the following:
+
+-   Propensity Scores
+
+```{r}
+ps <- weightit(treat ~ momage + I(momage^2) + work.dur + cig + booze + bwg + first + college + income + black + hispanic + white + preterm + prenatal,
+               method = "ps",
+               estimand = "ATT",
+               data = d)
+summary(ps)
+love.plot(ps,
+          stats = c("m", "ks") ,
+          thresholds = c(.1, .05))
+
+ps_att_mod <- lm(ppvtr.36 ~ treat,
+                 data = d,
+                 weights = ps$weights)
+
+tidy(ps_att_mod, conf.int = TRUE)
+```
+
+-   CBPS
+
+```{r}
+cbps <- weightit(treat ~ momage + I(momage^2) + work.dur + cig + booze + bwg + first + college + income + black + hispanic + white + preterm + prenatal,
+               method = "cbps",
+               estimand = "ATT",
+               data = d)
+summary(cbps)
+love.plot(cbps,
+          stats = c("m", "ks") ,
+          thresholds = c(.1, .05))
+
+cbps_att_mod <- lm(ppvtr.36 ~ treat,
+                 data = d,
+                 weights = cbps$weights)
+
+tidy(cbps_att_mod, conf.int = TRUE)
+```
+
+-   Entropy Balancing
+
+```{r}
+# ebal <- weightit(treat ~ momage + I(momage^2) + work.dur + cig + booze + bwg + first + college + income + black + hispanic + white + preterm + prenatal,
+#               method = "ebal",
+#               estimand = "ATT",
+#               data = d)
+# the above attempt results in an effective sample size of 0 control cases.
+
+ebal <- weightit(treat ~ I(momage^2) + work.dur + cig + booze + bwg + first + college + income + black + hispanic + white + preterm +  prenatal,
+             method = "ebal",
+             estimand = "ATT",
+             data = d)
+# removing momage but including momage^2 seems to help. 
+
+summary(ebal)
+love.plot(ebal,
+          stats = c("m", "ks") ,
+          thresholds = c(.1, .05))
+
+ebal_att_mod <- lm(ppvtr.36 ~ treat,
+                 data = d,
+                 weights = ebal$weights)
+
+tidy(ebal_att_mod, conf.int = TRUE)
+```
+
+None of these attempts result in "perfect" balance. The main issue seems to lie with balancing on momage, preterm, and income. The most balanced method seems to be entropy balancing, which gives us an ATT of 2.93. Indicating an average increase of 2.93 IQ points for those who receive the intervention.
