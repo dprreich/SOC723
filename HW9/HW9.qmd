@@ -1,0 +1,200 @@
+---
+title: "HW 9"
+format: html
+editor: visual
+---
+
+## 9.1.1
+
+I'm going to look at one treatment and two outcomes. The theory of dyadic morality, developed by Kurt Gray and Chelsea Schein, posits that people view things as more immoral when they perceive harm to a vulnerable patient. They also argue that liberals and conservatives view different entities as moral patients. I will test that here by looking at how conservatism predicts 1) if someone views abortion as acceptable if it prevents the child from having severe birth defects and 2) if someone views abortion as acceptable if it is to protect the life of the mother. I would expect those who are more conservative to view abortion as more acceptable when it is necessary to prevent a child from having severe birth defects but less acceptable when it is necessary to save the life of the mother, compared to those who are less conservative.
+
+```{r}
+# setup
+library(gssr)
+library(tidyverse)
+library(WeightIt)
+library(cobalt)
+library(MatchIt)
+library(broom)
+library(marginaleffects)
+gss2022 <- gss_get_yr(2022)
+
+# data cleaning stuff
+d <- as.data.frame(gss2022) |>
+  select(abdefect, abhlth, polviews, educ, sex, age, relig16, region, relig) |>
+  drop_na()
+d$abdefect = d$abdefect-1
+# 0 = support, # 1 = does not support
+d$abhlth = d$abhlth-1
+```
+
+```{r}
+## naive estimates
+abdefect_ne <- lm(abdefect ~ polviews,
+   data = gss2022)
+summary(abdefect_ne)
+# more conservative = less likely to support
+
+
+abhlth_ne <- lm(abhlth ~ polviews,
+   data = gss2022)
+summary(abhlth_ne)
+# more conservative = less likely to support
+
+# 9 percentage points less likely to support for defect
+# 3 percentage points less likely to support for mother
+```
+
+Our naive estimates are for every point increase in conservatism, we expect an increase of 9 percentage points in probability of being opposed to abortion to prevent birth defects and 3 percentage points in probability of being opposed to abortion to prevent harm to the mother. This seems to contradict the theory of dyadic morality, as we would expect conservatives to be less opposed if it leads to less suffering for the child. We shall look into this more, but I assume that this is likely because the birth defects could be perceived as less harmful than abortion.
+
+## 9.1.2 DAGs and Estimands
+
+![](dag.PNG)
+
+My estimand is an ATE. I am interested in how movement towards being liberal might decrease opposition to abortion, and how movement toward being conservative might increase opposition to abortion.
+
+## 9.1.3 Selecting Covariates
+
+The primary confounds that I believe might affect my estimate are educ, sex, age, relig16, relig, and region. These are all included in my DAG above except relig16. I include relig16 as a covariate, as people are likely shaped by the religion they grew up with, even if it is not the religion they endorse now.
+
+## 9.1.4 Regression (ATE)
+
+```{r}
+# regression
+# adjust for education, sex, age, religious preference, religion raised, region
+
+abdefectreg = lm(abdefect ~ polviews + educ + sex  + age + relig16 + relig + region + I(age^2),
+                 data = d)  
+summary(abdefectreg)
+
+abhlthreg = lm(abhlth ~ polviews + educ + sex + age + relig16 + region + I(age^2),
+                 data = d)  
+summary(abhlthreg)
+
+avg_slopes(abdefectreg, variables = "polviews")
+avg_slopes(abhlthreg, variables = "polviews")
+```
+
+Very little change from naive estimate.
+
+I assume this is because conservatives might think that abortion is worse for the child than being born with a severe birth defect (which makes sense). Additionally, most respondents express support for the right for abortion when it endangers the health of the mother, but less are supportive when it is risks birth defects.
+
+## 9.1.5 Weighting
+
+```{r}
+# weighting
+ebal <- weightit(
+  formula = as.factor(polviews) ~ educ + sex + age + relig16 + relig + region + I(age^2), 
+  data = d, 
+  method = "ebal", 
+  estimand = "ATE",
+  over = FALSE
+)
+love.plot(ebal,
+          stats = c("m", "ks"),
+          thresholds = c(.1, .05))
+
+```
+
+Oh wow, that is not good. Maybe try to make education binary (less than bachelors = 0, bachelors or more = 1).
+
+```{r}
+d <-mutate(d,
+             bachelors = if_else(educ >= 16, 1, 0))
+```
+
+```{r}
+# trying again
+ebal2 <- weightit(
+  formula = as.factor(polviews) ~ bachelors + sex + age + relig16 + region + relig + I(age^2), 
+  data = d, 
+  method = "ebal", 
+  estimand = "ATE",
+  over = FALSE
+)
+love.plot(ebal2,
+          stats = c("m", "ks"),
+          thresholds = c(.1, .05))
+
+```
+
+Better, but still gross. Maybe it is better to change polviews from continuous to binary. 0 being extremely liberal to moderate, and 1 being slightly conservative to extremely conservative. This might be problematic though... Also should treat region as a factor.
+
+```{r}
+d <-mutate(d,
+             conservative = if_else(polviews >= 5, 1, 0))
+
+ebal3 <- weightit(
+  formula = conservative ~ bachelors + sex  + age  + relig16 + relig + as.factor(region) + I(age^2), 
+  data = d, 
+  method = "ebal", 
+  estimand = "ATE",
+  over = FALSE
+)
+
+
+love.plot(ebal3,
+          stats = c("m", "ks"),
+          thresholds = c(.1, .05))
+```
+
+That's better! Still looks a little ugly though. Difficult to balance on religion it seems. I think that relig16 and relig should both be factors, but making them factors breaks the weights. Could make them binary but I'm not sure what the best cutoff would be. For now, I'll divide them both into non-religious vs religious.
+
+```{r}
+d <-mutate(d,
+             relig16_new = if_else(relig16 == 4, 0, 1),
+           relig_new = if_else(relig == 4, 0, 1))
+
+ebal4 <- weightit(
+  formula = conservative ~ bachelors + sex  + age  + as.factor(relig16_new) + as.factor(relig_new) + as.factor(region) + I(age^2), 
+  data = d, 
+  method = "ebal", 
+  estimand = "ATE",
+  over = FALSE
+)
+
+
+love.plot(ebal4,
+          stats = c("m", "ks"),
+          thresholds = c(.1, .05))
+```
+
+Looking good!
+
+```{r}
+ebal_mod_defect = lm(abdefect ~ conservative,
+              data = d,
+              weights = ebal4$weights)
+summary(ebal_mod_defect)
+
+ebal_mod_hlth = lm(abhlth ~ conservative,
+              data = d,
+              weights = ebal4$weights)
+summary(ebal_mod_hlth)
+```
+
+Okay, so, the interpretation changes now that I've dichotomized conservatism. However, the results show a similar pattern to what they looked like before. Identifying as having more conservative views results in a 23 percentage point increase in probability of being opposed to abortion to prevent birth defects, and a 8 percentage point increase in probability of being opposed to abortion to prevent harm to the mother. Makes sense, but not exactly supportive of the theory of dyadic morality. Again, this is likely because abortion could be perceived as causing greater harm than birth defects.
+
+## 9.1.6 Double Robustness Time
+
+```{r}
+mod_db_abdefect = lm(abdefect ~ conservative + bachelors + sex + age + relig_new + relig16_new + region + I(age^2),
+                     data = d,
+                     weights = ebal4$weights)
+summary(mod_db_abdefect)
+
+mod_db_abhlth = lm(abhlth ~ conservative + bachelors + sex + age + relig_new + relig16_new + region + I(age^2),
+                     data = d,
+                     weights = ebal4$weights)
+summary(mod_db_abhlth)
+```
+
+Similar to the weighting results.
+
+## 9.1.7 Summary
+
+As mentioned previously, I wanted to test the theory of dyadic morality with regard to views on abortion. According to the theory of dyadic morality, conservatives are more likely to view an action as immoral if it harms a more vulnerable patient. This led me to assume that an increase in conservative ideology would result in both an increase in opposition to abortion in order to protect the mother, and in order to prevent severe birth defects. However, I thought that more conservatism would lead to a *weaker* effect for opposition to abortion in order to prevent birth defects, compared to abortion necessary to protect the mother from harm. This is because conservatives are theoretically more likely to want to reduce harm to the baby, compared to reducing harm to the mother.
+
+I utilized regression and covariate balancing in order to attempt to close the backdoor paths from a variety of potential confounders (religious preferences, age, sex, etc.). I had to make significant changes to the predictors I used in order to achieve balance. Such as dichotomizing religious preference and conservatism. Overall, I believe my final model likely does a decent job at closing backdoor paths, but there are likely some unobserved confounders that could affect my results. I think that another interesting analysis could be to predict views on abortion in these specific cases from a participants views on abortion in general, as well as conservatism. I did not include that analysis here, as I assumed that it would not offer any new insights, but, the more I think about it, the more I believe that it could prove useful. Conservatives, while unlikely to support abortion in general, might be more likely to support it in cases that prevent future issues for the child.
+
+My results were not as I expected them to be. Identifying as at least slightly conservative results in an increase of 23 percentage points in probability of being opposed to abortion to prevent birth defects, and a roughly 9 percentage point increase in probability of being opposed to abortion to prevent harm to the mother. This is the opposite of what I expected, as this indicates that conservatives are less accepting of abortion when it can potentially prevent birth defects, compared to when it can potentially prevent harm to the mother. As mentioned previously, I feel that this might be because birth defects might not immediately be recognized as harmful, and if conservatives perceive an unborn fetus as a person who can feel harm, then abortion is a greater harm to them than possible birth defects are. A survey could better test my hypothesis by posing the potential harm to the mother as more similar to the harm that the child could face. That way, the only difference between the two are patients affected.
