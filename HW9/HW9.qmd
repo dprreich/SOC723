@@ -6,7 +6,7 @@ editor: visual
 
 ## 9.1.1
 
-I'm going to look at one treatment and two outcomes. The theory of dyadic morality, developed by Kurt Gray and Chelsea Schein, posits that people view things as more immoral when they perceive harm to a vulnerable patient. They also argue that liberals and conservatives view different entities as moral patients. I will test that here by looking at how conservatism predicts 1) if someone views abortion as acceptable if it prevents the child from having severe birth defects and 2) if someone views abortion as acceptable if it is to protect the life of the mother. I would expect those who are more conservative to view abortion as more acceptable when it is necessary to prevent a child from having severe birth defects but less acceptable when it is necessary to save the life of the mother, compared to those who are less conservative.
+I'm going to look at one treatment and two outcomes. The theory of dyadic morality, developed by Kurt Gray and Chelsea Schein, posits that people view things as more immoral when they perceive harm to a vulnerable patient. They also argue that liberals and conservatives view different entities as moral patients. I will test that here by looking at how conservatism predicts 1) if someone views abortion as acceptable if it prevents the child from having severe birth defects and 2) if someone views abortion as acceptable if it is to protect the life of the mother. I would expect those who are more conservative to view abortion as more acceptable when it is necessary to prevent a child from having severe birth defects compared to when it is necessary to save the life of the mother, but view it as less acceptable than non-conservatives in both scenarios.
 
 ```{r}
 # setup
