@@ -1,0 +1,181 @@
+---
+title: "HW10"
+format: html
+editor: visual
+---
+
+setup
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(panelr)
+library(gapminder)
+library(ggeffects)
+library(lme4)
+set.seed(53)
+```
+
+## 10.1 Reshaping
+
+```{r}
+gap_wide <- gapminder::gapminder |> 
+  select(continent, country, year, lifeExp, gdpPercap) |> 
+  pivot_wider(
+    names_from = year, 
+    values_from = c(lifeExp, gdpPercap), 
+    names_sep = ""
+  )
+glimpse(gap_wide)
+```
+
+Changing gap_wide into gap_long
+
+```{r}
+gap_long <- long_panel(gap_wide, prefix = "", begin = 1952, end = 2007, id = "country", wave = "year", label_location = "end") |> drop_na()
+# this was probably not the most code-efficient way to do this, but it worked
+glimpse(gap_long)
+```
+
+Changing gap_long back to wide!
+
+```{r}
+gap_wide <- widen_panel(gap_long)
+glimpse(gap_wide)
+```
+
+## 10.2 Line Plot
+
+gapminder graph for a random subset of 10 countries
+
+```{r}
+gap_slice <- gap_long %>%
+  group_by(country) |>
+  nest() |>
+  ungroup() |>
+  slice_sample(n = 10) |>
+  unnest(cols = c(data))
+
+ggplot(gap_slice, aes(x = year, y = lifeExp, color = country)) +
+         geom_line()
+```
+
+## 10.3 ICC
+
+LifeExp
+
+```{r}
+lifeExp_icc <- lmer(lifeExp ~ (1 | country),
+             data = gapminder,
+             REML = FALSE)
+
+summary(lifeExp_icc)
+
+# ICC of lifeExp
+119.40 / (119.40 + 47.36)
+```
+
+pop
+
+```{r}
+pop_icc <- lmer(pop ~ (1 | country),
+             data = gapminder,
+             REML = FALSE)
+
+summary(pop_icc)
+
+# ICC of pop
+10210000000000000 / (10210000000000000 + 1055000000000000)
+```
+
+gdpPercap
+
+```{r}
+gdpPercap_icc <- lmer(gdpPercap ~ (1 | country),
+             data = gapminder,
+             REML = FALSE)
+
+summary(gdpPercap_icc)
+
+# ICC of gdpPercap
+69177620 / (69177620 + 27934767) 
+```
+
+## 10.4 WageData analysis
+
+```{r}
+data("WageData", package = "panelr")
+
+WageData <- WageData |> 
+  mutate(
+    college = if_else(ed >= 16, 1L, 0L),  # college variable
+    t0 = t - 1                             # start time at 0
+  )
+```
+
+### Log wage as a function of college and time
+
+```{r}
+mod1 = lmer(lwage ~ college + 0 + (1 | id),
+     data = WageData,
+     REML = FALSE)
+summary(mod1)
+```
+
+### Log wage as a function of college and a random slope on time
+
+```{r}
+mod2 = lmer(lwage ~ college + t0 + (1 + t0 | id),
+     data = WageData,
+     REML = FALSE)
+summary(mod2)
+```
+
+### Log wage as a function of college and a random slope and time as a quadratic
+
+```{r}
+mod3 = lmer(lwage ~ college + (1 + t0 + I(t0^2) | id),
+     data = WageData,
+     REML = FALSE)
+summary(mod3)
+```
+
+### Compare model BICs
+
+```{r}
+BIC(mod1, mod2, mod3)
+
+```
+
+mod2 seems best? I'm not sure if I've encountered negative BICs before
+
+### Effect of college on log wages
+
+```{r}
+summary(mod2)
+```
+
+A college degree should increase an individual's log earnings by 0.327 (or roughly 25%?), according to this model.
+
+### Predictions of a sample of 9 individuals over time
+
+```{r}
+WageData$pred_lwage = predict(mod2)
+wage_slice <- WageData %>%
+  group_by(id) |>
+  nest() |>
+  ungroup() |>
+  slice_sample(n = 9) |>
+  unnest(cols = c(data))
+
+ggplot(wage_slice, aes(x = t0, y = pred_lwage, color = factor(id))) +
+         geom_line()
+```
+
+Comparing my predictions to actual lwage for fun
+
+```{r}
+ggplot(wage_slice, aes(x = t0, y = lwage, color = factor(id))) +
+         geom_line()
+```
+
+Seems like pretty decent predictions!
